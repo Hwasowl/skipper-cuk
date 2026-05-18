@@ -43,7 +43,7 @@ npm test
 
 | 변수 | 기본값 | 설명 |
 |---|---|---|
-| `START_URL` | `about:blank` | 브라우저 시작 URL |
+| `START_URL` | `https://e-cyber.catholic.ac.kr/ilos/main/main_form.acl` | 브라우저 시작 URL |
 | `END_BUTTON_DELAY_MS` | `3000` | 시청 완료 후 출석(종료) 버튼 클릭 전 버퍼(ms) |
 | `PLAYER_READY_TIMEOUT_MS` | `30000` | 플레이어 페이지 로드 대기 타임아웃(ms) |
 | `EXTRA_WAIT_SECONDS` | `60` | 영상 duration 외에 더 기다릴 시간(초) — 인트로·로딩 여유 |
