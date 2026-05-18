@@ -1,58 +1,33 @@
 import type { Page } from 'playwright';
 import { SELECTORS } from './selectors.ts';
 
-export interface VideoInfo {
-  duration: number;
-  currentTime: number;
+// 비디오 element가 cross-origin iframe(cms.catholic.ac.kr) 안에 있어 직접 제어 불가.
+// 따라서 list 페이지에서 미리 알아낸 duration·watched 값을 기준으로 시간만큼 대기한다.
+
+export async function waitForPlayerReady(page: Page, timeoutMs: number): Promise<void> {
+  await page.locator(SELECTORS.endButton).waitFor({ state: 'visible', timeout: timeoutMs });
 }
 
-export async function waitForVideoReady(page: Page, timeoutMs: number): Promise<VideoInfo> {
-  await page.waitForFunction(
-    (sel) => {
-      const v = document.querySelector(sel) as HTMLVideoElement | null;
-      return !!v && v.readyState >= 1 && Number.isFinite(v.duration) && v.duration > 0;
-    },
-    SELECTORS.videoElement,
-    { timeout: timeoutMs },
-  );
-
-  return await page.evaluate((sel) => {
-    const v = document.querySelector(sel) as HTMLVideoElement;
-    return { duration: v.duration, currentTime: v.currentTime };
-  }, SELECTORS.videoElement);
-}
-
-export async function startPlayback(page: Page): Promise<void> {
-  await page.evaluate((sel) => {
-    const v = document.querySelector(sel) as HTMLVideoElement;
-    void v.play();
-  }, SELECTORS.videoElement);
-}
-
-export async function waitUntilEnded(
+export async function waitPlaybackDuration(
   page: Page,
-  duration: number,
-  onProgress: (currentTime: number) => void,
+  remainingSeconds: number,
+  durationSeconds: number,
+  onProgress: (elapsedSeconds: number) => void,
 ): Promise<void> {
-  const overallTimeoutMs = Math.max(60_000, Math.floor(duration * 1.5 * 1000));
   const start = Date.now();
+  const totalMs = remainingSeconds * 1000;
 
   while (true) {
-    const state = await page.evaluate((sel) => {
-      const v = document.querySelector(sel) as HTMLVideoElement | null;
-      if (!v) return null;
-      return { currentTime: v.currentTime, ended: v.ended, duration: v.duration };
-    }, SELECTORS.videoElement);
+    const elapsedMs = Date.now() - start;
+    if (elapsedMs >= totalMs) return;
 
-    if (!state) throw new Error('비디오 엘리먼트가 사라졌습니다');
-    if (state.ended || state.currentTime >= state.duration - 0.5) return;
+    const remainingMs = totalMs - elapsedMs;
+    const stepMs = Math.min(30_000, remainingMs);
+    await page.waitForTimeout(stepMs);
 
-    onProgress(state.currentTime);
-
-    if (Date.now() - start > overallTimeoutMs) {
-      throw new Error(`비디오 종료 대기 타임아웃 (${Math.floor(overallTimeoutMs / 1000)}s 초과)`);
+    const elapsedSeconds = Math.floor((Date.now() - start) / 1000);
+    if (elapsedSeconds < remainingSeconds) {
+      onProgress(elapsedSeconds);
     }
-
-    await page.waitForTimeout(30_000);
   }
 }

@@ -44,5 +44,15 @@ npm test
 | 변수 | 기본값 | 설명 |
 |---|---|---|
 | `START_URL` | `about:blank` | 브라우저 시작 URL |
-| `END_BUTTON_DELAY_MS` | `3000` | 영상 종료 후 출석 버튼 클릭까지 대기 |
-| `VIDEO_READY_TIMEOUT_MS` | `30000` | `<video>` duration 감지 타임아웃 |
+| `END_BUTTON_DELAY_MS` | `3000` | 시청 완료 후 출석(종료) 버튼 클릭 전 버퍼(ms) |
+| `PLAYER_READY_TIMEOUT_MS` | `30000` | 플레이어 페이지 로드 대기 타임아웃(ms) |
+| `EXTRA_WAIT_SECONDS` | `60` | 영상 duration 외에 더 기다릴 시간(초) — 인트로·로딩 여유 |
+
+## 동작 방식
+
+비디오 element는 실제 LMS에서 cross-origin iframe(cms.catholic.ac.kr) 안에 있어 직접 제어가 어렵습니다. 따라서 매크로는 다음 방식으로 동작:
+
+1. 강의 목록 페이지에서 각 카드의 진행률(`0:00 / 42:43` + `0%`)을 파싱
+2. 학습하기 클릭 → 플레이어 페이지 로드(`#close_` 노출) 대기
+3. `(duration - watched) + EXTRA_WAIT_SECONDS` 만큼 실시간 대기
+4. `#close_` 클릭 → 강의 목록 페이지로 복귀

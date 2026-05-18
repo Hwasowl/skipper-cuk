@@ -3,7 +3,7 @@ import type { Config } from './config.ts';
 import type { Lecture } from './lecture-list.ts';
 import type { Logger } from './logger.ts';
 import { SELECTORS } from './selectors.ts';
-import { startPlayback, waitForVideoReady, waitUntilEnded } from './video-player.ts';
+import { waitForPlayerReady, waitPlaybackDuration } from './video-player.ts';
 
 export async function runLecture(
   context: BrowserContext,
@@ -18,13 +18,15 @@ export async function runLecture(
 
   const playerPage = await openPlayer(context, listPage, lecture);
   try {
-    const info = await waitForVideoReady(playerPage, config.videoReadyTimeoutMs);
-    await startPlayback(playerPage);
+    await waitForPlayerReady(playerPage, config.playerReadyTimeoutMs);
 
-    await waitUntilEnded(playerPage, info.duration, (currentTime) => {
-      const percent = Math.floor((currentTime / info.duration) * 100);
-      const currentText = formatCurrentTime(currentTime);
-      logger.progress(currentText, lecture.durationText, percent);
+    const remainingSeconds =
+      Math.max(0, lecture.durationSeconds - lecture.watchedSeconds) + config.extraWaitSeconds;
+
+    await waitPlaybackDuration(playerPage, remainingSeconds, lecture.durationSeconds, (elapsed) => {
+      const totalElapsed = lecture.watchedSeconds + elapsed;
+      const percent = Math.min(100, Math.floor((totalElapsed / lecture.durationSeconds) * 100));
+      logger.progress(formatTime(totalElapsed), lecture.durationText, percent);
     });
 
     logger.endingLecture();
@@ -33,7 +35,7 @@ export async function runLecture(
 
     await waitForPlayerClose(playerPage, listPage);
   } finally {
-    if (!playerPage.isClosed()) {
+    if (playerPage !== listPage && !playerPage.isClosed()) {
       await playerPage.close().catch(() => {});
     }
   }
@@ -63,7 +65,7 @@ async function waitForPlayerClose(playerPage: Page, listPage: Page): Promise<voi
   await playerPage.waitForEvent('close', { timeout: 30_000 }).catch(() => {});
 }
 
-function formatCurrentTime(seconds: number): string {
+function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, '0')}`;
