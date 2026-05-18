@@ -19,4 +19,13 @@ export const SELECTORS = {
 
   // 출석(종료) 버튼. force_close_(숨김 사본)와 구분하기 위해 #close_ 사용.
   endButton: '#close_',
+
+  // UniPlayer iframe 컨테이너 (cms.catholic.ac.kr — cross-origin)
+  playerFrame: '#contentViewer',
+
+  // iframe 안 중앙 큰 재생 버튼 (시청 시작 전 오버레이)
+  playOverlay: '.vc-front-screen-play-btn',
+
+  // iframe 안 하단 컨트롤바 재생/일시정지 (오버레이가 없을 때 fallback)
+  playControlButton: '.vc-pctrl-play-pause-btn',
 } as const;

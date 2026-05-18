@@ -3,7 +3,7 @@ import type { Config } from './config.ts';
 import type { Lecture } from './lecture-list.ts';
 import type { Logger } from './logger.ts';
 import { SELECTORS } from './selectors.ts';
-import { waitForPlayerReady, waitPlaybackDuration } from './video-player.ts';
+import { startVideoPlayback, waitForPlayerReady, waitPlaybackDuration } from './video-player.ts';
 
 export async function runLecture(
   context: BrowserContext,
@@ -19,6 +19,7 @@ export async function runLecture(
   const playerPage = await openPlayer(context, listPage, lecture);
   try {
     await waitForPlayerReady(playerPage, config.playerReadyTimeoutMs);
+    await startVideoPlayback(playerPage);
 
     const remainingSeconds =
       Math.max(0, lecture.durationSeconds - lecture.watchedSeconds) + config.extraWaitSeconds;
