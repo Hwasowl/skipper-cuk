@@ -4,7 +4,7 @@
 
 ## 요구사항
 
-- Node.js 20+
+- Node.js 20+ (https://nodejs.org/ko/download)
 
 ## 설치
 
