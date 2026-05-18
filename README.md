@@ -30,6 +30,9 @@ Chromium 창이 뜨면서 자동으로 가톨릭대 사이버캠퍼스 메인 �
 
 화면에 1차시·2차시·3차시 등 강의 목록이 보이는 상태여야 합니다.
 
+<img width="782" height="786" alt="image" src="https://github.com/user-attachments/assets/a75b459b-524d-4a07-8760-034200820c0c" />
+
+
 ### 3. 인증받기
 
 학교 정책상 시청 전 본인 인증(휴대폰 SMS 등)을 요구하는 과목이 있으면 이 단계에서 처리합니다.
