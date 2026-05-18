@@ -23,14 +23,14 @@ export async function collectLectures(page: Page): Promise<Lecture[]> {
   for (let i = 0; i < count; i++) {
     const card = cards.nth(i);
     const title = (await card.locator(SELECTORS.cardTitle).innerText()).trim();
-    const durationText = (await card.locator(SELECTORS.cardDuration).innerText()).trim();
     const progressText = (await card.locator(SELECTORS.cardProgressText).innerText()).trim();
     const percentText = (await card.locator(SELECTORS.cardProgressPercent).innerText()).trim();
 
-    // progressText 포맷: "20:00 / 42:43" → 첫 토큰만 떼어 watched 추출
-    const [watchedRaw] = progressText.split('/').map((s) => s.trim());
+    // progressText 포맷: "20:00 / 42:43" → 두 토큰 모두 분리해 watched / duration 추출
+    const [watchedRaw = '', durationRaw = ''] = progressText.split('/').map((s) => s.trim());
     const watchedSeconds = parseTimeToSeconds(watchedRaw);
-    const durationSeconds = parseTimeToSeconds(durationText);
+    const durationSeconds = parseTimeToSeconds(durationRaw);
+    const durationText = durationRaw;
     const progressPercent = parsePercent(percentText);
 
     const status = classifyLecture({ progressPercent, watchedSeconds, durationSeconds });

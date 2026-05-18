@@ -1,12 +1,22 @@
-// 모의 LMS 플랫폼의 DOM 확정 후 실제 값으로 교체할 것.
-// 기본값은 화면 캡처에서 관찰된 텍스트 기준 가정.
+// 실제 LMS DOM 분석 기반 셀렉터.
+// 강의 목록 페이지: e-cyber.catholic.ac.kr/.../online_list_form.acl
+// 플레이어 페이지: e-cyber.catholic.ac.kr/.../online_view_form.acl
 export const SELECTORS = {
-  lectureCard: '[data-lecture-card]',
-  cardTitle: '[data-lecture-title]',
-  cardDuration: '[data-lecture-duration]',
-  cardProgressText: '[data-lecture-progress-text]',
-  cardProgressPercent: '[data-lecture-progress-percent]',
-  studyButton: 'text=학습하기',
-  endButton: 'text=출석(종료)',
-  videoElement: 'video',
+  // 강의 카드: <div id="lecture-NN" class="lecture-box">
+  lectureCard: '.lecture-box',
+
+  // 차시 제목 ("1차시 ", "2차시 " ...)
+  cardTitle: "div[style*='font-size: 16px']",
+
+  // "0:00 / 42:43" 형식의 진행 텍스트. duration은 이 안에서 분리한다.
+  cardProgressText: "div[style*='margin-left: 7px']",
+
+  // 진행률 "0%" / "100%". id="per_text"가 카드마다 중복되므로 카드에 chain해서 사용할 것.
+  cardProgressPercent: "[id='per_text']",
+
+  // 학습하기 버튼: <img class="view" src="/.../btn_start_learning.gif">
+  studyButton: "img[src*='btn_start_learning']",
+
+  // 출석(종료) 버튼. force_close_(숨김 사본)와 구분하기 위해 #close_ 사용.
+  endButton: '#close_',
 } as const;
