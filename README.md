@@ -5,14 +5,14 @@
 ## 요구사항
 
 - Node.js 20+
-- Playwright용 Chromium (`npx playwright install chromium`)
 
 ## 설치
 
 ```bash
 npm install
-npx playwright install chromium
 ```
+
+`postinstall` 훅이 자동으로 Chromium까지 받아놓습니다.
 
 ## 사용법
 
