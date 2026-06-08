@@ -1,0 +1,4 @@
+# start.bat 은 UTF-8 BOM + CRLF 여야 cmd 에서 한글이 깨지지 않는다.
+# git 이 줄바꿈(LF 정규화)이나 인코딩을 건드리지 않도록 바이너리로 취급한다.
+# (이렇게 해야 GitHub "Download ZIP" 으로 받아도 BOM/CRLF 가 보존된다.)
+*.bat -text
