@@ -1,21 +1,26 @@
 import { chromium } from 'playwright';
 import readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
+import fs from 'node:fs';
 import { loadConfig } from './config.ts';
 import { collectLectures } from './lecture-list.ts';
 import { runLecture } from './lecture-runner.ts';
 import { Logger, type RunResult } from './logger.ts';
 
-// 로그인 세션을 저장해 재실행 시 재로그인을 피하는 브라우저 프로필 폴더
-const PROFILE_DIR = './.browser-profile';
+// 로그인 세션(쿠키)을 저장해 재실행 시 재로그인을 피하는 파일
+// LMS 인증은 만료일 없는 '세션 쿠키'라, persistent profile은 닫으면 소멸한다.
+// storageState는 세션 쿠키까지 보존하므로 이 방식만 재로그인을 막을 수 있다.
+const STATE_FILE = './.auth-state.json';
 
 async function main(): Promise<void> {
   const config = loadConfig();
   const logger = new Logger();
 
-  // persistent context: 쿠키·세션이 PROFILE_DIR에 저장되어 다음 실행 때 자동 복원됨
-  const context = await chromium.launchPersistentContext(PROFILE_DIR, { headless: false });
-  const page = context.pages()[0] ?? (await context.newPage());
+  const browser = await chromium.launch({ headless: false });
+  const context = await browser.newContext(
+    fs.existsSync(STATE_FILE) ? { storageState: STATE_FILE } : undefined,
+  );
+  const page = await context.newPage();
 
   if (config.startUrl !== 'about:blank') {
     await page.goto(config.startUrl);
@@ -39,6 +44,9 @@ async function main(): Promise<void> {
     const answer = (await rl.question(first ? '준비되면 Enter를 누르세요... ' : 'Enter=계속 / q=종료 : ')).trim().toLowerCase();
     if (!first && answer === 'q') break;
     first = false;
+
+    // 로그인 직후(그리고 직전 시청으로 갱신된) 세션 쿠키를 저장
+    await context.storageState({ path: STATE_FILE });
 
     const lectures = await collectLectures(page);
     const targets = lectures.filter((l) => l.status !== 'completed');
@@ -69,9 +77,11 @@ async function main(): Promise<void> {
     logger.summary(result);
   }
 
+  // 종료 전 최신 세션 저장
+  await context.storageState({ path: STATE_FILE });
   rl.close();
-  await context.close();
-  console.log('종료했습니다. 로그인 정보는 저장되어 다음 실행 때 재사용됩니다.');
+  await browser.close();
+  console.log('종료했습니다. 로그인 정보는 .auth-state.json에 저장되어 다음 실행 때 재사용됩니다.');
 }
 
 main().catch((error) => {
