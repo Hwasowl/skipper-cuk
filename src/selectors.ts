@@ -28,4 +28,15 @@ export const SELECTORS = {
 
   // iframe 안 하단 컨트롤바 재생/일시정지 (오버레이가 없을 때 fallback)
   playControlButton: '.vc-pctrl-play-pause-btn',
+
+  // 메인페이지(main_form.acl) 우상단 Todo List 아이콘
+  // <div class="message_item" title="Todo List" onclick="popTodo(1,'');">
+  todoIcon: '.message_item[title="Todo List"]',
+
+  // 열린 Todo 다이얼로그 내용 컨테이너 (jQuery UI dialog, 인페이지 모달)
+  todoDialog: '#todo_pop',
+
+  // 다이얼로그 내 개별 항목. onclick="goLecture('<과목키>','<차시SEQ>','<gubun>')"
+  // .no_data 는 "조회할 자료가 없습니다" placeholder 이므로 제외해야 한다.
+  todoItem: '.todo_wrap',
 } as const;
