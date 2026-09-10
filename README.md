@@ -4,6 +4,10 @@
 
 
 
+https://github.com/user-attachments/assets/e178be7c-a138-420c-a5ca-519f920a9fdd
+
+
+
 
 ## 요구사항
 
