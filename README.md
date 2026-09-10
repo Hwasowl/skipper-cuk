@@ -4,9 +4,6 @@
 
 
 
-https://github.com/user-attachments/assets/a69f9b75-6426-41a1-8f00-dbe0ba5487f0
-
-
 
 ## 요구사항
 
