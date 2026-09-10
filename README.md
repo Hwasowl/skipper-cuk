@@ -2,6 +2,12 @@
 
 가톨릭대학교 사이버캠퍼스 강의 자동 수강 매크로
 
+
+
+https://github.com/user-attachments/assets/a69f9b75-6426-41a1-8f00-dbe0ba5487f0
+
+
+
 ## 요구사항
 
 - Node.js 20+ (https://nodejs.org/ko/download)
