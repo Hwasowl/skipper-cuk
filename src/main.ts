@@ -36,17 +36,27 @@ async function main(): Promise<void> {
   await rl.question('로그인 완료 후 Enter... ');
   await context.storageState({ path: STATE_FILE });
 
-  // 반복 루프: Todo의 첫 번째 온라인강의 → 해당 주차 목록 페이지 시청 → Enter로 다음, q로 종료.
-  let first = true;
-  while (true) {
-    if (!first) {
-      console.log('────────────────────────────────────');
-      const answer = (await rl.question('다음 강의로 진행하려면 Enter / 종료하려면 q : '))
-        .trim()
-        .toLowerCase();
-      if (answer === 'q') break;
+  // 이후로는 Enter 없이 계속 진행한다. 중간에 멈추고 싶으면 q + Enter — 다음 항목으로
+  // 넘어가기 전에 확인하는 지점에서 멈춘다(현재 처리 중인 강의는 끝까지 마친다).
+  let stopRequested = false;
+  rl.on('line', (line) => {
+    if (line.trim().toLowerCase() === 'q') {
+      stopRequested = true;
+      console.log('종료 요청됨 — 현재 항목을 마치는 대로 종료합니다.');
     }
-    first = false;
+  });
+
+  console.log('────────────────────────────────────');
+  console.log('Todo 목록을 자동으로 순회합니다. 중간에 멈추려면 q 를 입력하고 Enter 하세요.');
+  console.log('────────────────────────────────────');
+
+  // 반복 루프: Todo의 첫 번째 온라인강의 → 해당 주차 목록 페이지 시청 → 자동으로 다음 항목.
+  // Enter 대기가 없으므로, 같은 항목이 계속 실패하면 폭주하지 않도록 재시도 횟수를 제한한다.
+  let lastFailedKey: string | null = null;
+  let consecutiveFailures = 0;
+
+  while (true) {
+    if (stopRequested) break;
 
     // 직전 시청으로 갱신된 세션 쿠키 저장
     await context.storageState({ path: STATE_FILE });
@@ -58,20 +68,36 @@ async function main(): Promise<void> {
     }
 
     const todo = todos[0];
+    const todoKey = `${todo.kj}|${todo.seq}`;
     console.log('────────────────────────────────────');
     console.log(`Todo 첫 항목: ${todo.title} — ${todo.subject} (${todo.dday})`);
+
+    const fail = async (reason: string): Promise<boolean> => {
+      console.error(reason);
+      consecutiveFailures = todoKey === lastFailedKey ? consecutiveFailures + 1 : 1;
+      lastFailedKey = todoKey;
+      if (consecutiveFailures >= 3) {
+        console.error('같은 항목이 3회 연속 실패해 자동 진행을 중단합니다.');
+        return true; // stop
+      }
+      await page.waitForTimeout(3_000);
+      return false;
+    };
 
     try {
       await openTodoLectureList(page, todo);
     } catch (error) {
-      console.error(`이동 실패: ${error instanceof Error ? error.message : String(error)}`);
+      if (await fail(`이동 실패: ${error instanceof Error ? error.message : String(error)}`)) break;
       continue;
     }
 
     if (!page.url().includes('online_list_form')) {
-      console.error(`예상과 다른 페이지입니다: ${page.url()}`);
+      if (await fail(`예상과 다른 페이지입니다: ${page.url()}`)) break;
       continue;
     }
+
+    lastFailedKey = null;
+    consecutiveFailures = 0;
 
     const result: RunResult = { total: 0, completed: 0, skipped: 0, failed: 0, elapsedMs: 0 };
     const startedAt = Date.now();
