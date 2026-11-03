@@ -1,6 +1,7 @@
 node_modules/
 .env
 .auth-state.json
+.auth-state-cu12.json
 .browser-profile/
 *.log
 playwright-report/

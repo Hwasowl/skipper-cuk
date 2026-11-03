@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "tsx src/main.ts",
+    "start:cu12": "tsx src/main-cu12.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "postinstall": "playwright install chromium"
