@@ -28,9 +28,24 @@ interface PlayerState {
   duration: number;
 }
 
+// 직전 페이지의 이동/리다이렉트가 아직 진행 중이면 goto가 net::ERR_ABORTED로 끊길 수 있어, 잠시 기다린 뒤 재시도한다.
+async function gotoWithRetry(page: Page, url: string): Promise<void> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await page.goto(url, { waitUntil: 'domcontentloaded' });
+      return;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!message.includes('ERR_ABORTED') || attempt >= 4) throw error;
+      await page.waitForLoadState('load', { timeout: 15_000 }).catch(() => {});
+      await page.waitForTimeout(2_000);
+    }
+  }
+}
+
 // 나의과정에서 '진행중' 과정만 읽는다. 과정 카드: <a href="javascript:enterClass(945)">
 async function collectCourses(page: Page): Promise<Course[]> {
-  await page.goto(MYCOURSE_URL, { waitUntil: 'domcontentloaded' });
+  await gotoWithRetry(page, MYCOURSE_URL);
   await page.locator('a[href*="enterClass"]').first().waitFor({ state: 'attached', timeout: 10_000 }).catch(() => {});
 
   const raw = await page.locator('a[href*="enterClass"]').evaluateAll((anchors) =>
@@ -58,7 +73,7 @@ async function collectCourses(page: Page): Promise<Course[]> {
 
 // 강의실의 열려 있는(학습인정기간 시작된) 온라인강의를 읽는다. at="1.000000000" 이면 완료.
 async function collectLessons(page: Page, course: Course): Promise<Lesson[]> {
-  await page.goto(classroomUrl(course.lectureSeq), { waitUntil: 'domcontentloaded' });
+  await gotoWithRetry(page, classroomUrl(course.lectureSeq));
   await page.locator('a.vod_contents').first().waitFor({ state: 'attached', timeout: 10_000 }).catch(() => {});
 
   const raw = await page.locator('a.vod_contents').evaluateAll((anchors) =>
