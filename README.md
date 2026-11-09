@@ -2,11 +2,7 @@
 
 가톨릭대학교 사이버캠퍼스 강의 자동 수강 매크로
 
-
-
-https://github.com/user-attachments/assets/e178be7c-a138-420c-a5ca-519f920a9fdd
-
-
+https://github.com/user-attachments/assets/9ae01670-7cd8-4cf9-963e-0718fbe12933
 
 
 ## 요구사항
