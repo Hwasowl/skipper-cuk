@@ -169,7 +169,7 @@ async function main(): Promise<void> {
   await page.goto(START_URL);
 
   const rl = readline.createInterface({ input, output });
-  const { loginId, loginPw } = loadConfig();
+  const { loginId, loginPw } = loadConfig('cu12');
 
   // 메인 페이지에 로그인 링크가 없으면 저장된 세션으로 이미 로그인된 상태
   if ((await page.locator(`a[href="${LOGIN_PATH}"]`).count()) === 0) {
@@ -185,7 +185,7 @@ async function main(): Promise<void> {
     await page.waitForTimeout(3_000);
   } else {
     console.log('────────────────────────────────────');
-    console.log('[공유대학] start-cu12-auto.bat 으로 실행하면 login.txt 계정으로 자동 로그인됩니다.');
+    console.log('[공유대학] login.txt에 공유대학아이디/공유대학비밀번호를 적어두면 다음부터 자동 로그인됩니다.');
     console.log('[공유대학] 1) 브라우저에서 직접 로그인하세요 (한 번 로그인하면 다음 실행부터는 유지됩니다)');
     console.log('[공유대학] 2) 로그인이 끝나면 이 터미널에 Enter 키를 누르세요');
     console.log('────────────────────────────────────');

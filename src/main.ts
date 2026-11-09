@@ -45,7 +45,7 @@ async function main(): Promise<void> {
     await page.waitForTimeout(3_000);
   } else {
     console.log('────────────────────────────────────');
-    console.log('start-auto.bat 으로 실행하면 login.txt 계정으로 자동 로그인됩니다.');
+    console.log('login.txt에 아이디/비밀번호를 적어두면 다음부터 자동 로그인됩니다.');
     console.log('1) 브라우저에서 직접 로그인하세요 (한 번 로그인하면 다음 실행부터는 유지됩니다)');
     console.log('2) 로그인이 끝나면 이 터미널에 Enter 키를 누르세요');
     console.log('────────────────────────────────────');

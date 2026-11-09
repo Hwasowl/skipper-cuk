@@ -3,6 +3,7 @@ import type { Config } from './config.ts';
 import type { Lecture } from './lecture-list.ts';
 import type { Logger } from './logger.ts';
 import { SELECTORS } from './selectors.ts';
+import { handleSecondaryAuth } from './secondary-auth.ts';
 import { startVideoPlayback, waitForPlayerReady, waitPlaybackDuration } from './video-player.ts';
 
 export async function runLecture(
@@ -16,7 +17,7 @@ export async function runLecture(
   const resumeText = lecture.watchedSeconds > 0 ? lecture.watchedText : undefined;
   logger.startLecture(lecture.index, total, lecture.title, lecture.durationText, resumeText);
 
-  const playerPage = await openPlayer(context, listPage, lecture);
+  const playerPage = await openPlayer(context, listPage, lecture, config);
   try {
     await waitForPlayerReady(playerPage, config.playerReadyTimeoutMs);
     await startVideoPlayback(playerPage);
@@ -46,12 +47,19 @@ async function openPlayer(
   context: BrowserContext,
   listPage: Page,
   lecture: Lecture,
+  config: Config,
 ): Promise<Page> {
   const popupPromise = listPage.waitForEvent('popup', { timeout: 30_000 }).catch(() => null);
   const newPagePromise = context.waitForEvent('page', { timeout: 30_000 }).catch(() => null);
   const navigationPromise = listPage.waitForNavigation({ timeout: 30_000 }).catch(() => null);
 
   await lecture.studyButton.click();
+
+  // 2차 인증 창은 플레이어가 열리기 전, 목록 페이지에 뜬다. 인증을 마치면 같은 탭이 플레이어로 이동한다.
+  if (await handleSecondaryAuth(listPage, config)) {
+    await listPage.waitForURL(/online_view_form/, { timeout: 30_000 });
+    return listPage;
+  }
 
   const playerPage = (await Promise.race([popupPromise, newPagePromise, navigationPromise.then(() => listPage)])) as Page | null;
   if (!playerPage) throw new Error('학습하기 클릭 후 플레이어 페이지를 찾지 못했습니다');
