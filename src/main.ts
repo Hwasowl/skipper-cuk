@@ -17,7 +17,8 @@ async function main(): Promise<void> {
   const config = loadConfig();
   const logger = new Logger();
 
-  const browser = await chromium.launch({ headless: false });
+  // 강의 소리가 나지 않도록 매크로 브라우저 전체를 음소거한다 (재생·출석에는 영향 없음).
+  const browser = await chromium.launch({ headless: false, args: ['--mute-audio'] });
   const context = await browser.newContext(
     fs.existsSync(STATE_FILE) ? { storageState: STATE_FILE } : undefined,
   );
