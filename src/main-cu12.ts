@@ -2,10 +2,12 @@ import { chromium, type Frame, type Page } from 'playwright';
 import readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import fs from 'node:fs';
+import { loadConfig } from './config.ts';
 
 const BASE = 'https://www.cu12.ac.kr';
 const START_URL = process.env.CU12_START_URL ?? `${BASE}/el/main/main_form.acl`;
-const MYCOURSE_URL = `${BASE}/el/member/mycourse_list_form.acl`;
+const LOGIN_PATH = '/el/member/login_form.acl';
+const MYCOURSE_URL =`${BASE}/el/member/mycourse_list_form.acl`;
 const classroomUrl = (lectureSeq: string): string => `${BASE}/el/class/todo_list_form.acl?LECTURE_SEQ=${lectureSeq}`;
 // 가톨릭대 사이버캠퍼스 세션과 섞이지 않도록 별도 파일에 저장한다.
 const STATE_FILE = './.auth-state-cu12.json';
@@ -167,12 +169,28 @@ async function main(): Promise<void> {
   await page.goto(START_URL);
 
   const rl = readline.createInterface({ input, output });
+  const { loginId, loginPw } = loadConfig();
 
-  console.log('────────────────────────────────────');
-  console.log('[공유대학] 1) 브라우저에서 직접 로그인하세요 (한 번 로그인하면 다음 실행부터는 유지됩니다)');
-  console.log('[공유대학] 2) 로그인이 끝나면 이 터미널에 Enter 키를 누르세요');
-  console.log('────────────────────────────────────');
-  await rl.question('로그인 완료 후 Enter... ');
+  // 메인 페이지에 로그인 링크가 없으면 저장된 세션으로 이미 로그인된 상태
+  if ((await page.locator(`a[href="${LOGIN_PATH}"]`).count()) === 0) {
+    console.log('[공유대학] 이미 로그인되어 있습니다.');
+  } else if (loginId && loginPw) {
+    console.log('[공유대학] login.txt 계정 정보로 자동 로그인합니다.');
+    await gotoWithRetry(page, `${BASE}${LOGIN_PATH}`);
+    await page.click('#catholic'); // "가톨릭 12개 대학 사용자" 탭에서 가톨릭대학교 선택
+    await page.locator('#usr_id2').waitFor({ state: 'visible', timeout: 10_000 });
+    await page.fill('#usr_id2', loginId);
+    await page.fill('#pwd2', loginPw);
+    await page.click('#loginBtn_check2');
+    await page.waitForTimeout(3_000);
+  } else {
+    console.log('────────────────────────────────────');
+    console.log('[공유대학] start-cu12-auto.bat 으로 실행하면 login.txt 계정으로 자동 로그인됩니다.');
+    console.log('[공유대학] 1) 브라우저에서 직접 로그인하세요 (한 번 로그인하면 다음 실행부터는 유지됩니다)');
+    console.log('[공유대학] 2) 로그인이 끝나면 이 터미널에 Enter 키를 누르세요');
+    console.log('────────────────────────────────────');
+    await rl.question('로그인 완료 후 Enter... ');
+  }
   await context.storageState({ path: STATE_FILE });
 
   let stopRequested = false;

@@ -29,11 +29,28 @@ async function main(): Promise<void> {
 
   const rl = readline.createInterface({ input, output });
 
-  console.log('────────────────────────────────────');
-  console.log('1) 브라우저에서 직접 로그인하세요 (한 번 로그인하면 다음 실행부터는 유지됩니다)');
-  console.log('2) 로그인이 끝나면 이 터미널에 Enter 키를 누르세요');
-  console.log('────────────────────────────────────');
-  await rl.question('로그인 완료 후 Enter... ');
+  // 헤더에 "로그인" 버튼이 없으면 저장된 세션으로 이미 로그인된 상태
+  const loginLink = page.locator('li.header_login');
+  if ((await loginLink.count()) === 0) {
+    console.log('이미 로그인되어 있습니다.');
+  } else if (config.loginId && config.loginPw) {
+    console.log('────────────────────────────────────');
+    console.log('login.txt 계정 정보로 자동 로그인합니다.');
+    console.log('────────────────────────────────────');
+    await loginLink.click(); // 로그인 폼 페이지로 이동
+    await page.locator('#usr_id').waitFor({ state: 'visible', timeout: 10_000 });
+    await page.fill('#usr_id', config.loginId);
+    await page.fill('#usr_pwd', config.loginPw);
+    await page.click('#login_btn');
+    await page.waitForTimeout(3_000);
+  } else {
+    console.log('────────────────────────────────────');
+    console.log('start-auto.bat 으로 실행하면 login.txt 계정으로 자동 로그인됩니다.');
+    console.log('1) 브라우저에서 직접 로그인하세요 (한 번 로그인하면 다음 실행부터는 유지됩니다)');
+    console.log('2) 로그인이 끝나면 이 터미널에 Enter 키를 누르세요');
+    console.log('────────────────────────────────────');
+    await rl.question('로그인 완료 후 Enter... ');
+  }
   await context.storageState({ path: STATE_FILE });
 
   // 이후로는 Enter 없이 계속 진행한다. 중간에 멈추고 싶으면 q + Enter — 다음 항목으로
